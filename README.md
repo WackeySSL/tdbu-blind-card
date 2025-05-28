@@ -15,7 +15,7 @@ Home Assistant card for Top Down Bottom Up Blinds TDBU
 ### Sample
 
 ```yaml
-type: 'custom:custom:tdbu-blind-card'
+type: 'custom:tdbu-blind-card'
 name: Kitchen blind
 entity_top: cover.gardin_kontor_top
 entity_bottom: cover.gardin_kontor_bottom
