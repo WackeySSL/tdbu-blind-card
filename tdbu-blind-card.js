@@ -3,11 +3,12 @@ class TDBUMushroomStyleCard extends HTMLElement {
   _isDraggingBottom = false;
   _hasButtons = true;
   _sliderWidth = '80px';
-  _pickerHeight = 10; // Ændret til 10
+  _pickerHeight = 10; // Denne er stadig 10, som du ændrede den til
   _userInteractedTop = false;
   _userInteractedBottom = false;
   _lastSetTopPosition = null;
   _lastSetBottomPosition = null;
+  _disableIfSensorOpen = null; // Ny variabel til den valgfri binære sensor
 
   set hass(hass) {
     this._hass = hass;
@@ -25,6 +26,7 @@ class TDBUMushroomStyleCard extends HTMLElement {
     this._config = config;
     this._hasButtons = config.show_buttons !== false;
     this._sliderWidth = config.slider_width || '80px';
+    this._disableIfSensorOpen = config.disable_if_sensor_open || null; // Læs valgfri sensor
   }
 
   getCardSize() {
@@ -61,6 +63,11 @@ class TDBUMushroomStyleCard extends HTMLElement {
           background-color: var(--card-background-color, #1e1e1e);
           color: var(--primary-text-color, #fff);
           border-radius: var(--ha-card-border-radius, 12px);
+          transition: opacity 0.3s ease-in-out; /* Tilføj transition for visuel effekt */
+        }
+        .wrapper.disabled {
+          opacity: 0.5; /* Dæmpet, når deaktiveret */
+          pointer-events: none; /* Deaktiver interaktion */
         }
         .buttons {
           ${buttonColumnStyle}
@@ -75,7 +82,7 @@ class TDBUMushroomStyleCard extends HTMLElement {
         .buttons button:hover { color: var(--accent-color, #ffc107); }
 
         .slider-background {
-          position: relative; /* Gør det til positioning context for slider-box */
+          position: relative;
           width: ${this._sliderWidth};
           height: 150px;
           background-size: 100% 100%;
@@ -85,19 +92,19 @@ class TDBUMushroomStyleCard extends HTMLElement {
 
         .slider-box {
           position: absolute;
-          top: 20px; /* Tilføj padding fra toppen */
+          top: 20px; /* Padding fra toppen af slider-background */
           left: 0;
           width: 100%;
           height: calc(100% - 20px); /* Juster højden til at tage højde for padding */
           display: flex;
           flex-direction: column;
-          justify-content: flex-start; /* Sikrer at pickers starter fra toppen af den interne boks */
+          justify-content: flex-start;
         }
 
         .picker {
           position: absolute;
           width: 100%;
-          height: ${this._pickerHeight}px; /* Brug den opdaterede værdi */
+          height: ${this._pickerHeight}px;
           background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAAAHCAYAAADuzmQ5AAAABGdBTUEAALGeYUxB9wAAACBjSFJNAACHCwAAjBIAAP70AAB/DgAAgQYAAOhBAAA54AAAHiqESS3PAAAA22lDQ1BJQ0MgUHJvZmlsZQAAKM9jYGB8wAAETECcm1dSFOTupBARGaXAfoGBEQjBIDG5uMA32C2EASf4dg2i9rIuA+mAs7ykoARIfwBikaKQIGegm1iAbL50CFsExE6CsFVA7CKgA4FsE5D6dAjbA8ROgrBjQOzkgiKgmYwFIPNTUouTgewGIDsB5DeItZ9ZwW5mFFVKLi0qg7qFkcmYgYEQH2FGHjsDg9lVBgbm/Qix1G4Ghm0nGRjE5RBiykC3CyUyMOxIKkmtKEH2PMRtYMCWXwAMfQZqAgYGAC7ONG+WT8jJAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAB5klEQVRYR+2XwWrCQBCGs2li7KmQCqJ46qVv0KeofRZfpM/Qk4fqQ0jRkydBBKGnHnopNmJiAjFp0v9Ps2UrEmyLtEI+GGYzOzMbsz+bKObzeadWq91qJSW/wPf9O8/zZmIymXTr9XrbNM0q4inQhBAfWcWkMAO5ES/gN6xDfTVJkhOEYoY5V/L/Ufed3rKsLBaG4Zc5iYzpus5x4jjOwnXdoRiNRv1Go9E2DMOSibsaFMGG+TADtXo+LDki1L2nUAh0oUVRtFMTjOWCSiEmZ71eD8R4PL5vtVo3KKwyQdq+gkLuGxwFxVOJp5Y8ueBKjg3ufRzHWqVSyTwFhTdONlcgqGS5XC7wynsQ0+m032w222iQnVD7ojRzsZCBRSlprmjiujyhjhApJgqHe0u/LSIVqQHsfYpXngNBDfjK6+Kj/Fp+QzGxqIkEzVI009EsQD7FyNoNzKQhniBOcFlyCLihNMLn/JNnLXuwFj6FoNjEkv1gIdPgSVYjYV1+qCSr1eoVghqKXq/XsW37CoIymQAdZEl7wF9yDouxUB3mo/6J94TYqdrnGz3/HHmv8uHJZ0LUuITzpCjnUGzv1/a9F6HUYphmDeA91D7DXjDmn6wL+DNMPcJf4tqGfX4vK+vxG8oNgmD2Di0RPo9DidC/AAAAAElFTkSuQmCC);
           background-repeat: no-repeat;
           cursor: pointer;
@@ -151,7 +158,7 @@ class TDBUMushroomStyleCard extends HTMLElement {
     this._coveredArea = shadow.getElementById("covered-area");
     this._sliderBox = shadow.querySelector(".slider-box");
     this._sliderBackground = shadow.querySelector(".slider-background");
-    this._buttonContainer = shadow.querySelector(".buttons");
+    this._buttonContainer = shadow.querySelector(".buttons"); // Reference til knapcontainer
     this._wrapper = shadow.querySelector(".wrapper");
 
     const btnTopUp = shadow.getElementById("btn-top-up");
@@ -197,6 +204,7 @@ class TDBUMushroomStyleCard extends HTMLElement {
     // træk-håndtering for bottom er altid tilgængelig
     this._setupPickerDrag("bottom");
     this._updateWrapperStyle();
+    this._updateCardInteractionState(); // Kald ved rendering
   }
 
   _updateWrapperStyle() {
@@ -215,22 +223,28 @@ class TDBUMushroomStyleCard extends HTMLElement {
     if (!pickerElement) return;
 
     let isDragging = false;
-    let startYOffset;
 
     const handleStart = (e) => {
+      // Afbryd hvis kortet er deaktiveret
+      if (this._isCardDisabled()) {
+        return;
+      }
+
       isDragging = true;
       if (type === "top") this._isDraggingTop = true;
       else this._isDraggingBottom = true;
       e.preventDefault();
 
-      const sliderBoxRect = this._sliderBox.getBoundingClientRect();
-      let clientY;
-      if (e.touches) {
-        clientY = e.touches[0].clientY;
-      } else {
-        clientY = e.clientY;
-      }
-      startYOffset = clientY - parseFloat(getComputedStyle(pickerElement).top) - sliderBoxRect.top;
+      // Original logik for startYOffset - beholdt for at matche initial kode
+      // const sliderBoxRect = this._sliderBox.getBoundingClientRect();
+      // let clientY;
+      // if (e.touches) {
+      //   clientY = e.touches[0].clientY;
+      // } else {
+      //   clientY = e.clientY;
+      // }
+      // startYOffset = clientY - parseFloat(getComputedStyle(pickerElement).top) - sliderBoxRect.top;
+
 
       document.addEventListener("mousemove", handleMove);
       document.addEventListener("mouseup", handleEnd);
@@ -275,12 +289,6 @@ class TDBUMushroomStyleCard extends HTMLElement {
       document.removeEventListener("touchend", handleEnd);
 
       const sliderBoxRect = this._sliderBox.getBoundingClientRect();
-      let clientY;
-      if (e.changedTouches) {
-        clientY = e.changedTouches[0].clientY;
-      } else {
-        clientY = e.clientY;
-      }
       const pickerY = parseFloat(getComputedStyle(pickerElement).top);
       const normalizedY = pickerY / (sliderBoxRect.height - pickerElement.offsetHeight);
       let position;
@@ -293,7 +301,7 @@ class TDBUMushroomStyleCard extends HTMLElement {
           this._call("set_cover_position", this._config.entity_top, position);
         }
         this._isDraggingTop = false;
-      } else { // type === "bottom"
+      } else { // type === "bottom" - **TILBAGE TIL ORIGINAL LOGIK HER**
         const bottomPickerTop = parseFloat(getComputedStyle(pickerElement).top);
         const topPickerBottom = this._pickerTop ? parseFloat(getComputedStyle(this._pickerTop).top) + this._pickerHeight : -Infinity;
         const topPickerTopPositionNormalized = this._pickerTop ? parseFloat(getComputedStyle(this._pickerTop).top) / (sliderBoxRect.height - this._pickerHeight) : 0;
@@ -301,11 +309,13 @@ class TDBUMushroomStyleCard extends HTMLElement {
 
         if (!this._pickerTop || bottomPickerTop <= topPickerBottom + 5) {
           if (!this._config.entity_top || topPickerPosition <= 5) {
-            position = 100;
+            position = 100; // Hvis top er fraværende eller helt lukket, og bunden er "kørt helt op"
           } else {
+            // Hvis top ikke er helt lukket, men bund er kørt op mod den
             position = Math.round(Math.max(0, Math.min(1, (1 - normalizedY))) * 100);
           }
         } else {
+          // Standard tilfælde: 100% åben = bund af slider
           position = Math.round(Math.max(0, Math.min(1, (1 - normalizedY))) * 100);
         }
         this._userInteractedBottom = true;
@@ -326,6 +336,9 @@ class TDBUMushroomStyleCard extends HTMLElement {
     const pickerHeight = this._pickerHeight;
     const tolerance = 2;
 
+    // Opdater kortets interaktionsstatus (enabled/disabled)
+    this._updateCardInteractionState();
+
     if (this._pickerTop && topState !== undefined && !this._isDraggingTop && (!this._userInteractedTop || (this._lastSetTopPosition !== null && Math.abs(topState - this._lastSetTopPosition) <= tolerance))) {
       const topY = (topState / 100) * (sliderHeight - pickerHeight);
       this._pickerTop.style.top = `${topY}px`;
@@ -336,8 +349,9 @@ class TDBUMushroomStyleCard extends HTMLElement {
     }
 
     if (this._pickerBottom && bottomState !== undefined && !this._isDraggingBottom && (!this._userInteractedBottom || (this._lastSetBottomPosition !== null && Math.abs(bottomState - this._lastSetBottomPosition) <= tolerance))) {
+      // **TILBAGE TIL ORIGINAL LOGIK HER FOR BOTTOM PICKER**
       let targetBottomY = (bottomState / 100) * (sliderHeight - pickerHeight);
-      let finalBottomY = sliderHeight - pickerHeight - targetBottomY;
+      let finalBottomY = sliderHeight - pickerHeight - targetBottomY; // Denne linje er crucial for den originale logik
 
       if (this._pickerTop) {
         const topY = parseFloat(getComputedStyle(this._pickerTop).top);
@@ -354,15 +368,35 @@ class TDBUMushroomStyleCard extends HTMLElement {
     this._updateCoveredArea();
   }
 
+  _isCardDisabled() {
+    if (this._disableIfSensorOpen) {
+      const sensorState = this._hass.states[this._disableIfSensorOpen];
+      // 'on' betyder åben for binære sensorer af typen window/door
+      return sensorState && sensorState.state === 'on';
+    }
+    return false; // Ikke deaktiveret hvis sensor ikke er konfigureret eller er 'off'
+  }
+
+  _updateCardInteractionState() {
+    if (this._wrapper) {
+      if (this._isCardDisabled()) {
+        this._wrapper.classList.add('disabled');
+      } else {
+        this._wrapper.classList.remove('disabled');
+      }
+    }
+  }
+
   _updateCoveredArea() {
     const sliderBoxRect = this._sliderBox?.getBoundingClientRect();
     const pickerTopY = this._pickerTop ? parseFloat(getComputedStyle(this._pickerTop).top) : 0;
-    const pickerBottomY = this._pickerBottom ? parseFloat(getComputedStyle(this._pickerBottom).top) : (sliderBoxRect?.height - this._pickerHeight || 130); // Default bottom hvis top mangler
+    // Original logik: Hvis top picker ikke eksisterer, starter covered area fra 0
+    const bottomOfSliderBox = sliderBoxRect ? sliderBoxRect.height - this._pickerHeight : 130; // Default bottom hvis sliderBoxRect ikke er klar
+    const pickerBottomY = this._pickerBottom ? parseFloat(getComputedStyle(this._pickerBottom).top) : bottomOfSliderBox; // Default bottom hvis top mangler
 
     if (sliderBoxRect) {
-      const topOfCovered = this._pickerTop ? pickerTopY : 0;
-      const bottomOfCovered = pickerBottomY;
-      const heightOfCovered = Math.max(0, bottomOfCovered - topOfCovered);
+      const topOfCovered = this._pickerTop ? pickerTopY : 0; // Covered area starts from top picker's top edge
+      const heightOfCovered = Math.max(0, pickerBottomY - topOfCovered); // Height is difference between pickers' top edges
 
       this._coveredArea.style.top = `${topOfCovered}px`;
       this._coveredArea.style.height = `${heightOfCovered}px`;
@@ -371,6 +405,14 @@ class TDBUMushroomStyleCard extends HTMLElement {
 
   _call(service, entity, position = null) {
     if (!entity) return;
+
+    // Tjek om kortet er deaktiveret på grund af den binære sensor
+    if (this._isCardDisabled()) {
+      console.warn(`TDBUMushroomStyleCard: Forsøg på at styre ${entity} blokeret, da døren (${this._disableIfSensorOpen}) er åben.`);
+      // Du kan eventuelt give visuel feedback til brugeren her (f.eks. en popup)
+      return; // Stop servicekaldet
+    }
+
     const [domain, svc] = ["cover", service];
     const data = { entity_id: entity };
     if (position !== null) data.position = position;
