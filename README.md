@@ -9,6 +9,7 @@ Home Assistant card for Top Down Bottom Up Blinds TDBU
 | name | string | False | _Friendly name of the entity_ | Name to display for the blind
 | entity_top | string | False | - | The blind TOP entity ID
 | entity_bottom | string | True | - | The blind bottom entity ID
+| disable_if_sensor_open | binary_sensor | false | - | Sensor disable control when sensor open/door/window open
 | show_buttons | string | False | `true` | Show buttons on the `left` side of the blind
 | slider_width | string | False | 80px | set width of the blind
 
