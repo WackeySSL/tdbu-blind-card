@@ -20,6 +20,7 @@ type: 'custom:tdbu-blind-card'
 name: Kitchen blind
 entity_top: cover.gardin_kontor_top
 entity_bottom: cover.gardin_kontor_bottom
+disable_if_sensor_open: binary_sensor.kontakt_skydedor_spisestue_window_door_is_open
 show_buttons: true
 slider_width: 100px
 
