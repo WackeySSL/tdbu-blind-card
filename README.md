@@ -9,7 +9,7 @@ Hunter Douglas PowerView, PowerView-Hub
 
 | Name | Type | Required | Default | Description
 | ---- | ---- | -------- | ------- | -----------
-| type | string | True | - | Must be "custom:tdbu-blind-card"
+| type | string | True | - | Must be "custom:tdbu_blind_card"
 | name | string | False | _Friendly name of the entity_ | Name to display for the blind
 | entity_top | string | False | - | The blind TOP entity ID
 | entity_bottom | string | True | - | The blind bottom entity ID
