@@ -3,7 +3,7 @@ Home Assistant card for Top Down Bottom Up Blinds TDBU
 
 Hunter Douglas PowerView, PowerView-Hub
 
-<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=WackeySSL&repository=https%3A%2F%2Fgithub.com%2FWackeySSL%2Ftdbu-blind-card" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store." /></a>
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=WackeySSL&repository=https%3A%2F%2Fgithub.com%2FWackeySSL%2Ftdbu_blind_card" target="_blank" rel="noreferrer noopener"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open your Home Assistant instance and open a repository inside the Home Assistant Community Store." /></a>
 
 ### General
 
@@ -20,7 +20,7 @@ Hunter Douglas PowerView, PowerView-Hub
 ### Sample
 
 ```yaml
-type: 'custom:tdbu-blind-card'
+type: 'custom:tdbu_blind_card'
 name: Kitchen blind
 entity_top: cover.gardin_kontor_top
 entity_bottom: cover.gardin_kontor_bottom
